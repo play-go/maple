@@ -1,0 +1,9 @@
+{
+  "profs": [
+    "KaBoT"
+  ],
+  "dofrag": true,
+  "docloseapp": false,
+  "frag": "cloud.frag",
+  "wall": "assets/icons/icon.png"
+}
