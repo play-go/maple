@@ -42,7 +42,6 @@ dependencies:
   shared_preferences:
   flutter_phoenix: ^1.1.1
   http:
-  desktop_multi_window:
   restart_app: ^1.2.1
   rebirth: ^1.0.2
   restartfromos: ^0.0.3
