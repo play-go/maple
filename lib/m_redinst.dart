@@ -173,6 +173,10 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
   List<fl.NavigationPaneItem> items = [];
   List<fl.NavigationPaneItem> fitems = [];
   TextStyle my17size = TextStyle(fontSize: 17);
+  Terminal terminal = Terminal(maxLines: 100000);
+  fl.TextEditingController instcont = fl.TextEditingController(
+    text: jsonData["name"],
+  );
 
   @override
   void initState() {
@@ -180,6 +184,34 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
     () async {
       await windowManager.center();
       await windowManager.show();
+
+      (await File("$watchdir/latest.log").readAsLines()).forEach((line) {
+        if (line == "") return;
+        final Match? match = logRegExp.firstMatch(line);
+        if (match != null) {
+          String color;
+          switch (match.group(1)) {
+            case 'I':
+              color = '\x1B[34m';
+              break;
+            case 'W':
+              color = '\x1B[93m';
+              break;
+            case 'E':
+              color = '\x1B[31m';
+              break;
+            default:
+              color = '\x1B[0m';
+          }
+          terminal.write(
+            "$color[${match.group(1)}] \x1B[33m${match.group(2)}  \x1B[90m[${match.group(3)}] \x1B[0m${match.group(4)}",
+          );
+        } else {
+          terminal.write(line);
+        }
+        terminal.nextLine();
+      });
+
       // if (Directory("$watchdir/content").existsSync()) {
       //   items.add(
 
@@ -195,7 +227,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
 
       //   );
       // }
-      // if (File("$watchdir/latest.log").existsSync()) {
+      // if (File("$watchdirgendir//latest.log").existsSync()) {
       //   fitems.add(
 
       //   );
@@ -207,6 +239,44 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
       // }
     }();
     super.initState();
+  }
+
+  List<Widget> listofallimage() {
+    List<Widget> lres = [];
+    filtersearch(
+      Directory("assets/icons").listSync(recursive: true),
+      ".png",
+    ).forEach((FileSystemEntity i) {
+      for (var j = 0; j < 15; j++) {
+        lres.add(
+          fl.Button(
+            onPressed: () {},
+            child: Column(
+              spacing: 5,
+              children: [
+                SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: Image(image: AssetImage(i.path)),
+                ),
+                SizedBox(
+                  width: 80,
+                  height: 25,
+                  child: fl.Card(
+                    padding: EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                    child: Text(
+                      path.basename(i.path),
+                      style: TextStyle(overflow: TextOverflow.ellipsis),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    });
+    return lres;
   }
 
   @override
@@ -238,64 +308,196 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
             title: Text("Информация"),
             body: fl.Card(
               child: Column(
-                spacing: 5,
+                spacing: 14,
                 children: [
-                  Center(
-                    child:
-                        jsonData["image"] == null
-                            ? SizedBox(
-                              width: 200,
-                              height: 200,
-                              child: fl.Card(
-                                backgroundColor: fl.Colors.grey,
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  child: Text(jsonData["name"]),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      fl.Card(
+                        child:
+                            jsonData["image"] == null
+                                ? SizedBox(
+                                  width: 150,
+                                  height: 150,
+                                  child: fl.Card(
+                                    backgroundColor: fl.Colors.grey,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      child: Text(jsonData["name"]),
+                                    ),
+                                  ),
+                                )
+                                : SizedBox(
+                                  width: 200,
+                                  height: 200,
+                                  child: fl.Card(
+                                    padding: fl.EdgeInsets.all(2),
+                                    backgroundColor: fl.Colors.grey,
+                                    child: jsonData["image"],
+                                  ),
                                 ),
-                              ),
-                            )
-                            : SizedBox(
-                              width: 200,
-                              height: 200,
-                              child: fl.Card(
-                                padding: fl.EdgeInsets.all(2),
-                                backgroundColor: fl.Colors.grey,
-                                child: jsonData["image"],
-                              ),
+                      ),
+                      SizedBox(width: 14),
+                      fl.Card(
+                        child: Row(
+                          // crossAxisAlignment: Cross1xisAlignment.start,
+                          spacing: 5,
+                          children: [
+                            Column(
+                              spacing: 12,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Название инстанса", style: my17size),
+                                Text("Файл запуска", style: my17size),
+                                Text("Параметры запуска", style: my17size),
+                                SizedBox(height: 35),
+                              ],
                             ),
+                            Column(
+                              spacing: 5,
+                              children: [
+                                SizedBox(
+                                  width: 200,
+                                  child: fl.TextBox(
+                                    controller: instcont,
+                                    placeholder: "- Пусто -",
+                                    placeholderStyle: fl.TextStyle(
+                                      color: fl.Colors.grey.toAccentColor(),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 200,
+                                  child: Row(
+                                    spacing: 5,
+                                    children: [
+                                      SizedBox(
+                                        width: 155,
+                                        child: fl.TextBox(
+                                          placeholder: "- Пусто -",
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 30,
+                                        child: fl.Button(
+                                          child: fl.Icon(fl.FluentIcons.folder),
+                                          onPressed: () {},
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 200,
+                                  child: fl.TextBox(placeholder: "- Пусто -"),
+                                ),
+                                SizedBox(height: 38),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 15),
                   fl.Card(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      spacing: 5,
                       children: [
-                        Text("Название инстанса", style: my17size),
-                        SizedBox(width: 200, child: fl.TextBox()),
-                      ],
-                    ),
-                  ),
-                  fl.Card(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Файл запуска", style: my17size),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Лог файл",
+                              textAlign: TextAlign.start,
+                              style: my17size,
+                            ),
+                            Row(
+                              children: [
+                                fl.Checkbox(
+                                  checked: true,
+                                  onChanged: (e) {},
+                                  content: Text("Обновлять при изменении"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                         SizedBox(
-                          width: 200,
-                          child: fl.Button(
-                            child: Text("Файл"),
-                            onPressed: () {},
+                          height: 330,
+                          child: fl.Card(
+                            child: TerminalView(
+                              terminal,
+                              shortcuts: const {
+                                SingleActivator(
+                                      LogicalKeyboardKey.keyC,
+                                      control: true,
+                                    ):
+                                    CopySelectionTextIntent.copy,
+                                SingleActivator(
+                                  LogicalKeyboardKey.keyA,
+                                  control: true,
+                                ): SelectAllTextIntent(
+                                  SelectionChangedCause.keyboard,
+                                ),
+                              },
+                              theme: termtheme,
+                              readOnly: true,
+                              backgroundOpacity: 0,
+                              autofocus: true,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+          fl.PaneItem(
+            icon: fl.Icon(fl.FluentIcons.image_pixel),
+            title: Text("Аватарка"),
+            body: fl.Card(
+              padding: EdgeInsets.zero,
+              margin: EdgeInsets.zero,
+              child: Column(
+                spacing: 5,
+                children: [
                   fl.Card(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Параметры запуска", style: my17size),
-                        SizedBox(width: 200, child: fl.TextBox()),
-                      ],
+                    child: Center(
+                      child:
+                          jsonData["image"] == null
+                              ? SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: fl.Card(
+                                  backgroundColor: fl.Colors.grey,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: Text(jsonData["name"]),
+                                  ),
+                                ),
+                              )
+                              : SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: fl.Card(
+                                  padding: fl.EdgeInsets.all(2),
+                                  backgroundColor: fl.Colors.grey,
+                                  child: jsonData["image"],
+                                ),
+                              ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 367,
+                    width: double.infinity,
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: listofallimage(),
+                      ),
                     ),
                   ),
                 ],
@@ -304,12 +506,17 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
           ),
           fl.PaneItemSeparator(),
           fl.PaneItem(
+            icon: fl.Icon(fl.FluentIcons.settings),
+            title: Text("Версия"),
+            body: Container(),
+          ),
+          fl.PaneItem(
             icon: fl.Icon(fl.FluentIcons.add_notes),
             title: Text("Моды"),
             body: Container(),
           ),
           fl.PaneItem(
-            icon: fl.Icon(fl.FluentIcons.image_pixel),
+            icon: fl.Icon(fl.FluentIcons.folder_list),
             title: Text("Миры"),
             body: Container(),
           ),
@@ -317,13 +524,6 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
             icon: fl.Icon(fl.FluentIcons.desktop_screenshot),
             title: Text("Скриншоты"),
             body: Container(),
-          ),
-        ],
-        footerItems: [
-          fl.PaneItem(
-            icon: fl.Icon(fl.FluentIcons.list_mirrored),
-            title: Text("Логи"),
-            body: fl.Card(child: Container()),
           ),
         ],
         selected: _selectedRail,

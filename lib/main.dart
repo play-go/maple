@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, use_build_context_synchronously, avoid_function_literals_in_foreach_calls, empty_catches, depend_on_referenced_packages, unused_import
+// ignore_for_file: use_build_context_synchronously, empty_catches
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -9,7 +9,6 @@ import 'package:fluent_ui/fluent_ui.dart' as fl;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:open_file/open_file.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import 'dart:ui' as uii;
@@ -17,7 +16,6 @@ import 'package:xterm/xterm.dart';
 import 'widgets/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import "utils/utils.dart";
 import "widgets/wid_instance.dart";
@@ -26,6 +24,8 @@ import 'package:clipboard/clipboard.dart';
 import 'widgets/gradient_shader_widget.dart';
 
 import 'package:flutter/foundation.dart';
+
+import 'utils/logger.dart';
 
 String gendir = Directory.current.path;
 String assetf = "$gendir/data/flutter_assets/assets";
@@ -66,6 +66,20 @@ void main(List<String> vars) async {
     assetf = "assets";
   }
 
+  final logger = await FileLogger.init(appName: 'Maple');
+
+  // Ловим ошибки Flutter
+  FlutterError.onError = (FlutterErrorDetails details) async {
+    await logger.e('Flutter framework error', details.exception, details.stack);
+    FlutterError.dumpErrorToConsole(details);
+  };
+
+  // Ловим необработанные async ошибки
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    logger.e('Uncaught async error', error, stack);
+    return true;
+  };
+
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.hide();
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -83,7 +97,6 @@ void main(List<String> vars) async {
   fragfilename = await prefs.get("frag", "balatro.frag");
   // hideProgress = await prefs.get("lurkprogressbar", false);
   profiles = await prefs.get("profs", []);
-  print(gendir);
   await WindowManager.instance.ensureInitialized();
 
   windowManager.waitUntilReadyToShow().then((_) async {
@@ -126,7 +139,7 @@ void main(List<String> vars) async {
   //   shortcutPolicy: ShortcutPolicy.requireCreate,
   // );
 
-  runApp(Phoenix(child: const MyApp()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -227,8 +240,9 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
       terminal.nextLine();
       logterm(terminal, "[InitState] Запуск приложения");
 
-      if (!await Directory(instplace).exists())
+      if (!await Directory(instplace).exists()) {
         await Directory(instplace).create();
+      }
       if (!await Directory(chacheV).exists()) await Directory(chacheV).create();
       try {
         List a = jsonDecode(
@@ -309,7 +323,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
   Widget playersname() {
     List<Widget> pp = [];
 
-    profiles.forEach((element) {
+    for (var element in profiles) {
       pp.add(
         fl.Card(
           padding: EdgeInsets.all(2),
@@ -330,7 +344,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
           ),
         ),
       );
-    });
+    }
 
     return SingleChildScrollView(child: Column(children: pp));
   }
@@ -597,7 +611,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
         a = await Process.start(
           "./${mapforsave['execute']}",
           ["--appimage-extract-and-run", "--dir", "${mapforsave['path']}"],
-          runInShell: true,
+          runInShell: false,
           environment: {"TMPDIR": tempdir},
           workingDirectory: mapforsave['path'],
         );
@@ -660,6 +674,8 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
         );
       } else {
         tempdir = (await Process.run("mktemp", [])).stdout.toString();
+        print(tempdir);
+
         a = await Process.start(
           "./${mapforsave['execute']}",
           ["--appimage-extract-and-run", "--dir", "${mapforsave['path']}"],
@@ -667,6 +683,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
           environment: {"TMPDIR": tempdir},
           workingDirectory: mapforsave['path'],
         );
+        print("213");
       }
 
       await fl.displayInfoBar(
@@ -924,8 +941,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
     setState(
       () =>
           selectedVersionS =
-              (verlist.first.child as Text).data.toString().split("v")[1] ??
-              selectedVersionS,
+              (verlist.first.child as Text).data.toString().split("v")[1],
     );
     final cont = TextEditingController();
     final contg = TextEditingController();
@@ -1053,7 +1069,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
       ),
     ];
 
-    fortabs.forEach((Map i) {
+    for (var i in fortabs) {
       result.add(
         fl.Tab(
           selectedBackgroundColor: fl.WidgetStatePropertyAll(
@@ -1101,7 +1117,7 @@ class _MyHomePageState extends State<MyHomePage> with WindowListener {
           },
         ),
       );
-    });
+    }
 
     return result;
   }

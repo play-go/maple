@@ -56,6 +56,16 @@ TerminalTheme termtheme = TerminalTheme(
 DateFormat logform = DateFormat('kk:mm:ss dd.MM.yyyy');
 RegExp logRegExp = RegExp(r'^\[(\w)\]\s+([\d/: .+-]+)\s+\[(.*?)\]\s+(.*)$');
 
+List<FileSystemEntity> filtersearch(List<FileSystemEntity> t, String g) {
+  List<FileSystemEntity> cleared = [];
+  t.forEach((FileSystemEntity i) {
+    if (path.basename(i.path).endsWith(g)) {
+      cleared.add(i);
+    }
+  });
+  return cleared;
+}
+
 void sendtoterm(String line, terminal) {
   final Match? match = logRegExp.firstMatch(line);
 
